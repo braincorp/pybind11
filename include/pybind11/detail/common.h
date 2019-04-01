@@ -482,21 +482,19 @@ template <class... Ts> using all_of = bool_constant<(Ts::value && ...)>;
 template <class... Ts> using any_of = bool_constant<(Ts::value || ...)>;
 #elif !defined(_MSC_VER)
 template <bool...> struct bools {};
-template <class... Ts> using all_of = std::is_same<
-    bools<Ts::value..., true>,
-    bools<true, Ts::value...>>;
-template <class... Ts> using any_of = negation<all_of<negation<Ts>...>>;
+template <class... Ts> struct  all_of : std::is_same< bools<Ts::value..., true>,  bools<true, Ts::value...>> { };
+template <class... Ts> struct any_of : negation<all_of<negation<Ts>...>> { };
 #else
 // MSVC has trouble with the above, but supports std::conjunction, which we can use instead (albeit
 // at a slight loss of compilation efficiency).
 template <class... Ts> using all_of = std::conjunction<Ts...>;
 template <class... Ts> using any_of = std::disjunction<Ts...>;
 #endif
-template <class... Ts> using none_of = negation<any_of<Ts...>>;
+template <class... Ts> struct none_of : negation<any_of<Ts...>>  { };
 
-template <class T, template<class> class... Predicates> using satisfies_all_of = all_of<Predicates<T>...>;
-template <class T, template<class> class... Predicates> using satisfies_any_of = any_of<Predicates<T>...>;
-template <class T, template<class> class... Predicates> using satisfies_none_of = none_of<Predicates<T>...>;
+template <class T, template<class> class... Predicates> struct satisfies_all_of : all_of<Predicates<T>...> { };
+template <class T, template<class> class... Predicates> struct satisfies_any_of : any_of<Predicates<T>...> { };
+template <class T, template<class> class... Predicates> struct satisfies_none_of : none_of<Predicates<T>...> { };
 
 /// Strip the class from a method type
 template <typename T> struct remove_class { };
